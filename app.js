@@ -1,51 +1,54 @@
 const USER_KEY='jkP2PUser';
+const SESSION_KEY='jkP2PSession';
+const SUPABASE_URL='https://gwvhuegpkziujcyqzcra.supabase.co';
+const SUPABASE_KEY='sb_publishable_peDfskbZ_AXq2doOtkrC9Q_F1JSPCW8';
 
-function makeId(prefix,len=8){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let out='';
-  for(let i=0;i<len;i++) out+=chars[Math.floor(Math.random()*chars.length)];
-  return prefix+out;
-}
+function makeId(prefix,len=8){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let out='';for(let i=0;i<len;i++)out+=chars[Math.floor(Math.random()*chars.length)];return prefix+out}
 function getUser(){try{return JSON.parse(localStorage.getItem(USER_KEY)||'null')}catch(e){return null}}
 function saveUser(u){localStorage.setItem(USER_KEY,JSON.stringify(u))}
-function defaultUser(email){
-  const name=(email.split('@')[0]||'User').replace(/[._-]+/g,' ');
-  return {name:name.replace(/\b\w/g,c=>c.toUpperCase()),email,avatar:'',referenceId:makeId('JKP-',10),referralCode:makeId('JK',6),joinedAt:new Date().toISOString()};
+function getSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch(e){return null}}
+function saveSession(s){localStorage.setItem(SESSION_KEY,JSON.stringify(s))}
+function clearSession(){localStorage.removeItem(SESSION_KEY);localStorage.removeItem(USER_KEY)}
+function headers(token){return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(token||SUPABASE_KEY),'Content-Type':'application/json'}}
+async function sb(path,options={}){const res=await fetch(SUPABASE_URL+path,{...options,headers:{...headers(options.token),...(options.headers||{})}});const text=await res.text();let data=null;try{data=text?JSON.parse(text):null}catch(e){data=text}if(!res.ok)throw new Error(data?.msg||data?.message||data?.error_description||data?.error||'Supabase request failed');return data}
+function defaultUser(email){const name=(email.split('@')[0]||'User').replace(/[._-]+/g,' ');return{name:name.replace(/\b\w/g,c=>c.toUpperCase()),email,avatar:'',referenceId:makeId('JKP-',10),referralCode:makeId('JK',6),joinedAt:new Date().toISOString()}}
+async function createProfile(session,email){
+ const existing=await sb('/rest/v1/profiles?select=*&id=eq.'+encodeURIComponent(session.user.id),{token:session.access_token});
+ if(existing.length){saveUser(existing[0]);return existing[0]}
+ const u=defaultUser(email);u.id=session.user.id;
+ await sb('/rest/v1/profiles',{method:'POST',token:session.access_token,headers:{Prefer:'return=representation'},body:JSON.stringify({id:u.id,email:u.email,name:u.name,avatar_url:null,reference_id:u.referenceId,referral_code:u.referralCode})});
+ saveUser(u);return u;
 }
-function loginDemo(){
-  const email=(document.getElementById('email')?.value||'').trim().toLowerCase();
-  const password=(document.getElementById('password')?.value||'').trim();
-  if(!/^\S+@\S+\.\S+$/.test(email)||password.length<4){alert('Valid email aur minimum 4 character password enter karein.');return}
-  const old=getUser();
-  const user=old&&old.email===email?old:defaultUser(email);
-  saveUser(user);
-  alert('Login successful');
-  location.href='index.html';
+async function loginDemo(){
+ const email=(document.getElementById('email')?.value||'').trim().toLowerCase(),password=(document.getElementById('password')?.value||'').trim();
+ if(!/^\S+@\S+\.\S+$/.test(email)||password.length<4){alert('Valid email aur minimum 4 character password enter karein.');return}
+ try{
+  const session=await sb('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
+  saveSession(session);await createProfile(session,email);alert('Login successful');location.href='index.html';
+ }catch(e){alert('Login failed: '+e.message)}
 }
-function createDemoAccount(){
-  const email=(document.getElementById('email')?.value||'').trim().toLowerCase();
-  if(!/^\S+@\S+\.\S+$/.test(email)){alert('Pehle valid email enter karein.');return}
-  saveUser(defaultUser(email)); alert('Demo account created'); location.href='index.html';
+async function createDemoAccount(){
+ const email=(document.getElementById('email')?.value||'').trim().toLowerCase(),password=(document.getElementById('password')?.value||'').trim();
+ if(!/^\S+@\S+\.\S+$/.test(email)||password.length<6){alert('Valid email aur minimum 6 character password enter karein.');return}
+ try{
+  const data=await sb('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
+  if(data.access_token){saveSession(data);await createProfile(data,email);alert('Account created');location.href='index.html'}
+  else alert('Account created. Ab login karein.');
+ }catch(e){alert('Signup failed: '+e.message)}
 }
-function initials(name){return (name||'U').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}
-function renderAuthNav(){
-  const el=document.getElementById('authNav'); if(!el)return;
-  const u=getUser();
-  if(!u){el.className='btn dark';el.href='login.html';el.innerHTML='Login';return}
-  el.className='profile-nav';el.href='profile.html';
-  el.innerHTML=u.avatar?'<img class="avatar" src="'+u.avatar+'" alt="Profile"><span>Profile</span>':'<span class="avatar initials">'+initials(u.name)+'</span><span>Profile</span>';
+async function loadRemoteProfile(){
+ const s=getSession();if(!s)return null;
+ try{const rows=await sb('/rest/v1/profiles?select=*&id=eq.'+encodeURIComponent(s.user.id),{token:s.access_token});if(rows[0]){const p=rows[0];const u={id:p.id,name:p.name||'User',email:p.email,avatar:p.avatar_url||'',referenceId:p.reference_id,referralCode:p.referral_code,joinedAt:p.created_at};saveUser(u);return u}}catch(e){console.warn(e)}return getUser()
 }
-function logout(){localStorage.removeItem(USER_KEY);location.href='index.html'}
-function handleAvatar(input){
-  const file=input.files&&input.files[0]; if(!file)return;
-  if(file.size>2*1024*1024){alert('Profile photo 2MB se chhoti rakhein.');return}
-  const reader=new FileReader();reader.onload=()=>{const u=getUser();if(!u)return;u.avatar=reader.result;saveUser(u);location.reload()};reader.readAsDataURL(file);
+function initials(name){return(name||'U').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}
+async function renderAuthNav(){const el=document.getElementById('authNav');if(!el)return;const u=await loadRemoteProfile();if(!u){el.className='btn dark';el.href='login.html';el.innerHTML='Login';return}el.className='profile-nav';el.href='profile.html';el.innerHTML=u.avatar?'<img class="avatar" src="'+u.avatar+'" alt="Profile"><span>Profile</span>':'<span class="avatar initials">'+initials(u.name)+'</span><span>Profile</span>'}
+async function logout(){const s=getSession();try{if(s)await sb('/auth/v1/logout',{method:'POST',token:s.access_token})}catch(e){}clearSession();location.href='index.html'}
+async function handleAvatar(input){
+ const file=input.files&&input.files[0];if(!file)return;if(file.size>2*1024*1024){alert('Profile photo 2MB se chhoti rakhein.');return}
+ const s=getSession(),u=getUser();if(!s||!u){alert('Login required');return}
+ const reader=new FileReader();reader.onload=async()=>{try{const dataUrl=reader.result;await sb('/rest/v1/profiles?id=eq.'+encodeURIComponent(u.id),{method:'PATCH',token:s.access_token,headers:{Prefer:'return=minimal'},body:JSON.stringify({avatar_url:dataUrl})});u.avatar=dataUrl;saveUser(u);location.reload()}catch(e){alert('Profile photo update failed: '+e.message)}};reader.readAsDataURL(file)
 }
-async function shareReferral(){
-  const u=getUser(); if(!u)return;
-  const text='Join me on JK P2P. My referral code: '+u.referralCode;
-  try{if(navigator.share){await navigator.share({title:'JK P2P Referral',text})}else{await navigator.clipboard.writeText(text);alert('Referral message copied.')}}catch(e){}
-}
+async function shareReferral(){const u=await loadRemoteProfile();if(!u)return;const text='Join me on JK P2P. My referral code: '+u.referralCode;try{if(navigator.share)await navigator.share({title:'JK P2P Referral',text});else{await navigator.clipboard.writeText(text);alert('Referral message copied.')}}catch(e){}}
 function startChat(s,r){location.href='chat.html?seller='+encodeURIComponent(s)+'&rate='+r}
 function confirmDeal(){location.href='order.html'}
 function submitPayment(){if(!document.getElementById('shot').files.length||!document.getElementById('utr').value){alert('Screenshot aur UTR dono submit karein.');return}alert('Demo payment proof submitted');location.href='order.html'}
