@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JK P2P — Profile</title><link rel="stylesheet" href="styles.css"></head>
+<body><header class="top"><div class="container navwrap"><a class="logo" href="index.html">JK <span>P2P</span></a><nav class="nav"><a href="index.html">Home</a><a href="buy.html">Buy</a><a href="sell.html">Sell</a><a href="support.html">Support</a></nav></div></header>
+<main class="container section"><div id="profilePage"></div></main>
+<script src="app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+ const u=getUser(), root=document.getElementById('profilePage');
+ if(!u){location.href='login.html';return}
+ root.innerHTML='<div class="profile-head"><div><span class="pill">MY ACCOUNT</span><h1>Profile</h1><p class="muted">Your JK P2P account details and referral tools.</p></div><button class="btn ghost" onclick="logout()">Logout</button></div>'+
+ '<div class="profile-grid"><section class="panel profile-card"><div class="avatar-large-wrap">'+(u.avatar?'<img class="avatar-large" src="'+u.avatar+'" alt="Profile">':'<div class="avatar-large initials">'+initials(u.name)+'</div>')+'</div><h2>'+u.name+'</h2><p class="muted">'+u.email+'</p><label class="btn ghost upload-btn">Change Profile Picture<input type="file" accept="image/*" onchange="handleAvatar(this)" hidden></label></section>'+
+ '<section class="panel"><div class="data-row"><span>Email</span><b>'+u.email+'</b></div><div class="data-row"><span>Unique Reference ID</span><b>'+u.referenceId+'</b></div><div class="data-row"><span>Referral Code</span><b>'+u.referralCode+'</b></div><button class="btn primary share-btn" onclick="shareReferral()">↗ Share Referral Code</button><p class="tiny muted">Referral sharing is a frontend demo. The code is stored in this browser for this demo account.</p></section></div>';
+});
+</script></body></html>
