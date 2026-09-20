@@ -1,1 +1,33 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JK P2P</title><link rel="stylesheet" href="styles.css"></head><body><header class="top"><div class="container navwrap"><a class="logo" href="index.html">JK <span>P2P</span></a><nav class="nav"><a href="index.html">Home</a><a href="buy.html">Buy</a><a href="sell.html">Sell</a><a href="support.html">Support</a></nav></div></header><main class="container section"><div class="panel"><span class="pill">TRADE CHAT</span><h1>Discuss the deal.</h1><div id="chat" class="chat"><div class="bubble">Seller: Hello, how much USDT do you want?</div><div class="bubble me">You: I want 100 USDT.</div><div class="bubble">Seller: Rate is ₹89.20. Please confirm.</div></div><div style="display:flex;gap:8px;margin-top:12px"><input id="msg" style="flex:1;background:#090d11;color:#fff;border:1px solid #29313a;border-radius:11px;padding:13px"><button class="btn ghost" onclick="sendMsg()">Send</button></div><div class="actions"><button class="btn primary" onclick="confirmDeal()">Confirm Deal</button></div></div></main><script src="app.js"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JK P2P — Trade Chat</title><link rel="stylesheet" href="styles.css"></head>
+<body><header class="top"><div class="container navwrap"><a class="logo" href="index.html">JK <span>P2P</span></a><nav class="nav"><a href="index.html">Home</a><a href="buy.html">Buy</a><a href="sell.html">Sell</a><a href="support.html">Support</a></nav></div></header>
+<main class="container section"><div class="panel"><span class="pill">TRADE CHAT</span><h1>Discuss the deal.</h1>
+<div id="chat" class="chat"><div class="bubble">Seller: Hello, how much USDT do you want?</div><div class="bubble me">You: I want 100 USDT.</div><div class="bubble">Seller: Rate is ₹89.20. Please confirm.</div></div>
+<div class="trade-calculator">
+<label for="usdtAmount">How much USDT do you want?</label>
+<div class="amount-line"><input id="usdtAmount" type="number" inputmode="decimal" min="1" step="0.01" placeholder="Enter USDT amount"><span>USDT</span></div>
+<div class="calc-result"><span>INR to pay</span><strong id="inrAmount">₹0.00</strong></div>
+<p id="amountError" class="tiny muted">Rate: ₹89.20 / USDT</p>
+<button id="payButton" class="btn primary pay-button" type="button" disabled>Enter USDT amount</button>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px"><input id="msg" style="flex:1;background:#090d11;color:#fff;border:1px solid #29313a;border-radius:11px;padding:13px" placeholder="Type a message"><button class="btn ghost" onclick="sendMsg()">Send</button></div>
+<div class="actions"><button class="btn ghost" onclick="confirmDeal()">Confirm Deal</button></div>
+</div></main>
+<script src="app.js"></script>
+<script>
+(function(){
+ const rate=89.20, input=document.getElementById('usdtAmount'), out=document.getElementById('inrAmount'), btn=document.getElementById('payButton'), err=document.getElementById('amountError');
+ function update(){
+   const v=Number(input.value);
+   if(!Number.isFinite(v)||v<=0){out.textContent='₹0.00';btn.disabled=true;btn.textContent='Enter USDT amount';err.textContent='Rate: ₹89.20 / USDT';return}
+   const inr=v*rate; out.textContent='₹'+inr.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+   btn.disabled=false;btn.textContent='Pay ₹'+inr.toLocaleString('en-IN',{maximumFractionDigits:2})+' → QR';
+   err.textContent='100 USDT = ₹8,920.00 at the demo rate.';
+ }
+ input.addEventListener('input',update);
+ btn.addEventListener('click',function(){
+   const v=Number(input.value); if(!Number.isFinite(v)||v<=0)return;
+   const inr=v*rate; location.href='payment.html?usdt='+encodeURIComponent(v)+'&inr='+encodeURIComponent(inr.toFixed(2));
+ });
+ update();
+})();
+</script></body></html>
