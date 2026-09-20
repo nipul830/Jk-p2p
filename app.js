@@ -11,11 +11,11 @@ function saveSession(s){localStorage.setItem(SESSION_KEY,JSON.stringify(s))}
 function clearSession(){localStorage.removeItem(SESSION_KEY);localStorage.removeItem(USER_KEY)}
 function headers(token){return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(token||SUPABASE_KEY),'Content-Type':'application/json'}}
 async function sb(path,options={}){const res=await fetch(SUPABASE_URL+path,{...options,headers:{...headers(options.token),...(options.headers||{})}});const text=await res.text();let data=null;try{data=text?JSON.parse(text):null}catch(e){data=text}if(!res.ok)throw new Error(data?.msg||data?.message||data?.error_description||data?.error||'Supabase request failed');return data}
-function defaultUser(email){const name=(email.split('@')[0]||'User').replace(/[._-]+/g,' ');return{name:name.replace(/\b\w/g,c=>c.toUpperCase()),email,avatar:'',referenceId:makeId('JKP-',10),referralCode:makeId('JK',6),joinedAt:new Date().toISOString()}}
-async function createProfile(session,email){
+function defaultUser(email,nameOverride=''){const raw=(nameOverride||email.split('@')[0]||'User').trim();const name=raw.replace(/[._-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());return{name:name||'User',email,avatar:'',referenceId:makeId('JKP-',10),referralCode:makeId('JK',6),joinedAt:new Date().toISOString()}}
+async function createProfile(session,email,nameOverride=''){
  const existing=await sb('/rest/v1/profiles?select=*&id=eq.'+encodeURIComponent(session.user.id),{token:session.access_token});
  if(existing.length){saveUser(existing[0]);return existing[0]}
- const u=defaultUser(email);u.id=session.user.id;
+ const u=defaultUser(email,nameOverride);u.id=session.user.id;
  await sb('/rest/v1/profiles',{method:'POST',token:session.access_token,headers:{Prefer:'return=representation'},body:JSON.stringify({id:u.id,email:u.email,name:u.name,avatar_url:null,reference_id:u.referenceId,referral_code:u.referralCode})});
  saveUser(u);return u;
 }
@@ -27,15 +27,26 @@ async function loginDemo(){
   saveSession(session);await createProfile(session,email);alert('Login successful');location.href='index.html';
  }catch(e){alert('Login failed: '+e.message)}
 }
-async function createDemoAccount(){
- const email=(document.getElementById('email')?.value||'').trim().toLowerCase(),password=(document.getElementById('password')?.value||'').trim();
- if(!/^\S+@\S+\.\S+$/.test(email)||password.length<6){alert('Valid email aur minimum 6 character password enter karein.');return}
+async function createAccount(){
+ const name=(document.getElementById('signupName')?.value||'').trim();
+ const email=(document.getElementById('signupEmail')?.value||'').trim().toLowerCase();
+ const password=(document.getElementById('signupPassword')?.value||'').trim();
+ const confirm=(document.getElementById('signupConfirm')?.value||'').trim();
+ if(name.length<2){alert('Full name enter karein.');return}
+ if(!/^\S+@\S+\.\S+$/.test(email)){alert('Valid email enter karein.');return}
+ if(password.length<6){alert('Password minimum 6 characters ka hona chahiye.');return}
+ if(password!==confirm){alert('Passwords match nahi karte.');return}
  try{
-  const data=await sb('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
-  if(data.access_token){saveSession(data);await createProfile(data,email);alert('Account created');location.href='index.html'}
-  else alert('Account created. Ab login karein.');
+  const data=await sb('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password,data:{full_name:name}})});
+  if(data.access_token){
+   saveSession(data);await createProfile(data,email,name);alert('Account created successfully');location.href='index.html';
+  } else {
+   alert('Account created successfully. Ab Login page se login karein.');
+   location.href='login.html';
+  }
  }catch(e){alert('Signup failed: '+e.message)}
 }
+async function createDemoAccount(){return createAccount()}
 async function loadRemoteProfile(){
  const s=getSession();if(!s)return null;
  try{const rows=await sb('/rest/v1/profiles?select=*&id=eq.'+encodeURIComponent(s.user.id),{token:s.access_token});if(rows[0]){const p=rows[0];const u={id:p.id,name:p.name||'User',email:p.email,avatar:p.avatar_url||'',referenceId:p.reference_id,referralCode:p.referral_code,joinedAt:p.created_at};saveUser(u);return u}}catch(e){console.warn(e)}return getUser()
