@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JK P2P — Create Account</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top"><div class="container navwrap">
+<a class="logo" href="index.html">JK <span>P2P</span></a>
+<nav class="nav"><a href="index.html">Home</a><a href="buy.html">Buy</a><a href="sell.html">Sell</a><a href="support.html">Support</a></nav>
+</div></header>
+<main class="container section">
+<div class="panel auth-panel">
+<span class="pill">CREATE ACCOUNT</span>
+<h1>Join JK P2P.</h1>
+<p class="muted">Account banayein aur apna profile, reference ID aur referral code paayein.</p>
+<div class="form">
+<label for="signupName">Full name</label>
+<input id="signupName" type="text" autocomplete="name" placeholder="Your full name">
+<label for="signupEmail">Email</label>
+<input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com">
+<label for="signupPassword">Password</label>
+<input id="signupPassword" type="password" autocomplete="new-password" placeholder="Minimum 6 characters">
+<label for="signupConfirm">Confirm password</label>
+<input id="signupConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password">
+<button class="btn primary" onclick="createAccount()">Create account</button>
+</div>
+<div class="auth-switch">
+<span class="muted">Already have an account?</span>
+<a class="btn ghost" href="login.html">Login</a>
+</div>
+<p class="tiny muted">Testing mode: payment/USDT transfer abhi mock hai.</p>
+</div>
+</main>
+<script src="app.js"></script>
+</body></html>
