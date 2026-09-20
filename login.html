@@ -1,6 +1,32 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JK P2P — Login</title><link rel="stylesheet" href="styles.css"></head>
-<body><header class="top"><div class="container navwrap"><a class="logo" href="index.html">JK <span>P2P</span></a><nav class="nav"><a href="index.html">Home</a><a href="buy.html">Buy</a><a href="sell.html">Sell</a><a href="support.html">Support</a></nav></div></header>
-<main class="container section"><div class="panel auth-panel"><span class="pill">ACCOUNT</span><h1>Welcome back.</h1><p class="muted">Demo login ke baad top-right me Login ki jagah Profile dikhega.</p>
-<div class="form"><label>Email</label><input id="email" type="email" value="demo@jkp2p.com"><label>Password</label><input id="password" type="password" value="123456"><button class="btn primary" onclick="loginDemo()">Login</button><button class="btn ghost" type="button" onclick="createDemoAccount()">Create Demo Account</button></div>
-<p class="tiny muted">Demo credentials: demo@jkp2p.com / 123456</p></div></main><script src="app.js"></script></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JK P2P — Login</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top"><div class="container navwrap">
+<a class="logo" href="index.html">JK <span>P2P</span></a>
+<nav class="nav"><a href="index.html">Home</a><a href="buy.html">Buy</a><a href="sell.html">Sell</a><a href="support.html">Support</a></nav>
+</div></header>
+<main class="container section">
+<div class="panel auth-panel">
+<span class="pill">ACCOUNT</span>
+<h1>Welcome back.</h1>
+<p class="muted">Apne JK P2P account me login karein.</p>
+<div class="form">
+<label for="email">Email</label>
+<input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+<label for="password">Password</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="Enter password">
+<button class="btn primary" onclick="loginDemo()">Login</button>
+</div>
+<div class="auth-switch">
+<span class="muted">Account nahi hai?</span>
+<a class="btn ghost" href="signup.html">Create account</a>
+</div>
+<p class="tiny muted">Testing ke liye apna naya account use karein. Real payment abhi enabled nahi hai.</p>
+</div>
+</main>
+<script src="app.js"></script>
+</body></html>
