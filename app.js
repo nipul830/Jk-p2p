@@ -14,10 +14,12 @@ async function sb(path,options={}){const res=await fetch(SUPABASE_URL+path,{...o
 function defaultUser(email,nameOverride=''){const raw=(nameOverride||email.split('@')[0]||'User').trim();const name=raw.replace(/[._-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());return{name:name||'User',email,avatar:'',referenceId:makeId('JKP-',10),referralCode:makeId('JK',6),joinedAt:new Date().toISOString()}}
 async function createProfile(session,email,nameOverride=''){
  const existing=await sb('/rest/v1/profiles?select=*&id=eq.'+encodeURIComponent(session.user.id),{token:session.access_token});
- if(existing.length){saveUser(existing[0]);return existing[0]}
- const u=defaultUser(email,nameOverride);u.id=session.user.id;
- await sb('/rest/v1/profiles',{method:'POST',token:session.access_token,headers:{Prefer:'return=representation'},body:JSON.stringify({id:u.id,email:u.email,name:u.name,avatar_url:null,reference_id:u.referenceId,referral_code:u.referralCode})});
- saveUser(u);return u;
+ if(existing.length){
+  const p=existing[0];
+  const u={id:p.id,name:p.name||nameOverride||'User',email:p.email||email,avatar:p.avatar_url||'',referenceId:p.reference_id,referralCode:p.referral_code,joinedAt:p.created_at};
+  saveUser(u);return u;
+ }
+ throw new Error('Profile was not created automatically. Please try signup again.');
 }
 async function loginDemo(){
  const email=(document.getElementById('email')?.value||'').trim().toLowerCase(),password=(document.getElementById('password')?.value||'').trim();
@@ -39,7 +41,7 @@ async function createAccount(){
  try{
   const data=await sb('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password,data:{full_name:name}})});
   if(data.access_token){
-   saveSession(data);await createProfile(data,email,name);alert('Account created successfully');location.href='index.html';
+   saveSession(data);alert('Account created successfully');location.href='index.html';
   } else {
    alert('Account created successfully. Ab Login page se login karein.');
    location.href='login.html';
